@@ -1,16 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.Mathematics;
-
 public class Chunk
 {
-
 	public Vector3 centre;
 	public float size;
 	public Mesh mesh;
 
 	public ComputeBuffer pointsBuffer;
-	int numPointsPerAxis;
 	public MeshFilter filter;
 	MeshRenderer renderer;
 	MeshCollider collider;
@@ -23,13 +20,13 @@ public class Chunk
 	List<Vector3> processedNormals;
 	List<int> processedTriangles;
 
-
-	public Chunk(Vector3Int coord, Vector3 centre, float size, int numPointsPerAxis, GameObject meshHolder)
+    //Initializes the chunk with given coordinates, center, size, and a GameObject for mesh rendering.
+    //Sets up the mesh, compute buffer, and components for rendering and collision.
+    public Chunk(Vector3Int coord, Vector3 centre, float size, int numPointsPerAxis, GameObject meshHolder)
 	{
 		this.id = coord;
 		this.centre = centre;
 		this.size = size;
-		this.numPointsPerAxis = numPointsPerAxis;
 
 		mesh = new Mesh();
 		mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -51,7 +48,10 @@ public class Chunk
 		processedTriangles = new List<int>();
 	}
 
-	public void CreateMesh(VertexData[] vertexData, int numVertices, bool useFlatShading)
+    // Processes vertex data to create the mesh.
+    // Handles whether to use flat shading or smooth shading.
+    // Updates the mesh and collider with the new geometry.
+    public void CreateMesh(VertexData[] vertexData, int numVertices, bool useFlatShading)
 	{
 
 		vertexIndexMap.Clear();
@@ -101,7 +101,8 @@ public class Chunk
 		collider.sharedMesh = mesh;
 	}
 
-	public struct PointData
+    // A structure to hold the position, normal, and density of a point. Used in the compute buffer.
+    public struct PointData
 	{
 		public Vector3 position;
 		public Vector3 normal;

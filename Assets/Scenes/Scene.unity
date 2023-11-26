@@ -321,9 +321,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c97c9cb73740fe64d91491c03c60b152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numChunks: 10
+  terrainBoundarySize: 500
+  chunksPerAxis: 10
   numPointsPerAxis: 35
-  boundsSize: 500
   isoLevel: 0
   useFlatShading: 0
   noiseScale: 0.75

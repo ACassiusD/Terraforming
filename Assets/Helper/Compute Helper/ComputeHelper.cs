@@ -2,13 +2,13 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using ComputeShaderUtility;
+using System.Threading;
 
 // This class contains some helper functions to make life a little easier working with compute shaders
 // (Very work-in-progress!)
 
 public static class ComputeHelper
 {
-
 	public const FilterMode defaultFilterMode = FilterMode.Bilinear;
 	public const GraphicsFormat defaultGraphicsFormat = GraphicsFormat.R32G32B32A32_SFloat;
 
@@ -17,20 +17,19 @@ public static class ComputeHelper
 	static ComputeShader swizzleTextureCompute;
 	static ComputeShader copy3DCompute;
 
-
-
 	// Subscribe to this event to be notified when buffers created in edit mode should be released
 	// (i.e before script compilation occurs, and when exitting edit mode)
 	public static event System.Action shouldReleaseEditModeBuffers;
 
-	/// Convenience method for dispatching a compute shader.
-	/// It calculates the number of thread groups based on the number of iterations needed.
+	//Calculate # of thread groups needed by dividing texture size by the threadgroup size for each axis. Then dispatch the compute shader.
 	public static void Dispatch(ComputeShader cs, int numIterationsX, int numIterationsY = 1, int numIterationsZ = 1, int kernelIndex = 0)
 	{
-		Vector3Int threadGroupSizes = GetThreadGroupSizes(cs, kernelIndex);
-		int numGroupsX = Mathf.CeilToInt(numIterationsX / (float)threadGroupSizes.x);
-		int numGroupsY = Mathf.CeilToInt(numIterationsY / (float)threadGroupSizes.y);
-		int numGroupsZ = Mathf.CeilToInt(numIterationsZ / (float)threadGroupSizes.y);
+        // Get thread group size defined in the compute shader, (i.e. 8,8,8 threads per individual thread group, Not # of thread groups) 
+        Vector3Int threadGroupSize = GetThreadGroupSize(cs, kernelIndex); 
+
+		int numGroupsX = Mathf.CeilToInt(numIterationsX / (float)threadGroupSize.x);
+		int numGroupsY = Mathf.CeilToInt(numIterationsY / (float)threadGroupSize.y);
+		int numGroupsZ = Mathf.CeilToInt(numIterationsZ / (float)threadGroupSize.y);
 		cs.Dispatch(kernelIndex, numGroupsX, numGroupsY, numGroupsZ);
 	}
 
@@ -105,14 +104,15 @@ public static class ComputeHelper
 			if (textures[i] != null)
 			{
 				textures[i].Release();
-			}
-		}
+            }
+        }
 	}
 
-	public static Vector3Int GetThreadGroupSizes(ComputeShader compute, int kernelIndex = 0)
+    //Queries the compute shader to find out the size of the thread groups for a specific kernel.
+    public static Vector3Int GetThreadGroupSize(ComputeShader compute, int kernelIndex = 0)
 	{
 		uint x, y, z;
-		compute.GetKernelThreadGroupSizes(kernelIndex, out x, out y, out z);
+        compute.GetKernelThreadGroupSizes(kernelIndex, out x, out y, out z);
 		return new Vector3Int((int)x, (int)y, (int)z);
 	}
 
@@ -306,8 +306,6 @@ public static class ComputeHelper
 			}
 		}
 	}
-
-
 
 	static Vector4 ChannelToMask(Channel channel)
 	{

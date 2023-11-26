@@ -1,14 +1,15 @@
-﻿#pragma kernel CSMain
+﻿//Generate 3D density field for terrain
+#pragma kernel CSMain
 #include "/Includes/Noise.compute"
 
 RWTexture3D<float> DensityTexture;
 int textureSize;
-
 float planetSize;
 float noiseScale;
 float noiseHeightMultiplier;
 
-float fbm(int numLayers, float lacunarity, float persistence, float scale, float3 pos) {
+float fractalBrownianMotion(int numLayers, float lacunarity, float persistence, float scale, float3 pos)
+{
 	float noise = 0;
 	float frequency = scale / 100;
 	float amplitude = 1;
@@ -25,8 +26,9 @@ float fbm(int numLayers, float lacunarity, float persistence, float scale, float
 	return noise;
 }
 
-float calculateDensity(int3 cell) {
-	float3 worldPos = (cell / float(textureSize-1.0) - 0.5f) * planetSize;
+// 
+float calculateDensity(int3 gridPoint){
+    float3 worldPos = (gridPoint / float(textureSize - 1.0) - 0.5f) * planetSize;
 
 	float halfS = planetSize / 2;
 	float maxD = length(float3(halfS,halfS,halfS));
@@ -36,16 +38,19 @@ float calculateDensity(int3 cell) {
 	float density = length(worldPos) / (maxD + fudge) - 0.5;
 
 	// Noise
-	float noise = fbm(6, 2, 0.5, noiseScale, worldPos) * noiseHeightMultiplier;
+    float noise = fractalBrownianMotion(6, 2, 0.5, noiseScale, worldPos) * noiseHeightMultiplier;
 
 	density += noise;
 
 	return density;
 }
 
-[numthreads(8,8,8)]
+//id = Thread id || the unique 3d grid position in the texture.
+[numthreads(8, 8, 8)] //Size of each individial thread Group  8×8×8=512 threads
 void CSMain (int3 id : SV_DispatchThreadID)
 {
+	//If we are on a thread that is outside the texture, return.
+	//Handling the extra threads created from rouding up for the thread groups.
 	if (id.x >= textureSize || id.y >= textureSize || id.z >= textureSize) {
 		return;
 	}
