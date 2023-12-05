@@ -48,12 +48,11 @@ public class Chunk
 		processedTriangles = new List<int>();
 	}
 
-    // Processes vertex data to create the mesh.
+    // Processes vertex data to create the mesh for this chunk.
     // Handles whether to use flat shading or smooth shading.
     // Updates the mesh and collider with the new geometry.
     public void CreateMesh(VertexData[] vertexData, int numVertices, bool useFlatShading)
 	{
-
 		vertexIndexMap.Clear();
 		processedVertices.Clear();
 		processedNormals.Clear();

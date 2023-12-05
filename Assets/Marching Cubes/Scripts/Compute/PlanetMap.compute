@@ -1,10 +1,9 @@
-﻿//Generate 3D density field for terrain
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
 #include "/Includes/Noise.compute"
 
 RWTexture3D<float> DensityTexture;
 int textureSize;
-float planetSize;
+float planetSize; //Diamter of the planet
 float noiseScale;
 float noiseHeightMultiplier;
 
@@ -30,9 +29,13 @@ float fractalBrownianMotion(int numLayers, float lacunarity, float persistence, 
 float calculateDensity(int3 gridPoint){
     float3 worldPos = (gridPoint / float(textureSize - 1.0) - 0.5f) * planetSize;
 
+	//Radius of the planet
 	float halfS = planetSize / 2;
+	
+	//maximum distance from the center of the sphere to its surface
 	float maxD = length(float3(halfS,halfS,halfS));
 
+	//small adjustment factor 
 	float fudge = 1;
 
 	float density = length(worldPos) / (maxD + fudge) - 0.5;
